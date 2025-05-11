@@ -18,17 +18,17 @@ def criar_usina():
     nova_usina = Usina(**data)
     db.session.add(nova_usina)
     db.session.commit()
-    return usina_schema.dump(nova_usina), 201  # Usando dump em vez de jsonify
+    return usina_schema.dump(nova_usina), 201  
 
 @usina_bp.route('/usinas', methods=['GET'])
 def listar_usinas():
     usinas = Usina.query.all()
-    return usinas_schema.dump(usinas)  # Usando dump em vez de jsonify
+    return usinas_schema.dump(usinas)  
 
 @usina_bp.route('/usinas/<int:id>', methods=['GET'])
 def obter_usina(id):
     usina = Usina.query.get_or_404(id)
-    return usina_schema.dump(usina)  # Usando dump em vez de jsonify
+    return usina_schema.dump(usina)  
 
 @usina_bp.route('/usinas/<int:id>', methods=['PUT'])
 def atualizar_usina(id):
@@ -41,7 +41,7 @@ def atualizar_usina(id):
     usina.nome = data['nome']
     usina.localizacao = data.get('localizacao')
     db.session.commit()
-    return usina_schema.dump(usina)  # Usando dump em vez de jsonify
+    return usina_schema.dump(usina)  
 
 @usina_bp.route('/usinas/<int:id>', methods=['DELETE'])
 def deletar_usina(id):

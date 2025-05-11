@@ -7,20 +7,20 @@ from flask import request
 
 leitura_bp = Blueprint('leitura', __name__)
 
-# Rota para carregar os dados de metrics.json
+
 @leitura_bp.route('/inserir-metrics', methods=['POST'])
 def inserir_metrics():
     try:
-        # Carregar o conteúdo do arquivo JSON
+        
         with open('metrics.json', 'r') as file:
             data = json.load(file)
         
-        # Processar cada item e adicionar ao banco de dados
+        
         for item in data:
 
             if not all(k in item and item[k] is not None for k in ('inversor_id', 'potencia_ativa_watt', 'temperatura_celsius')):
 
-                continue  # pula registros incompletos
+                continue  
 
             datetime_str = item['datetime']['$date']
             data_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -34,7 +34,7 @@ def inserir_metrics():
             db.session.add(leitura)
 
         
-        # Commitar as alterações no banco de dados
+        
         db.session.commit()
         return jsonify({"message": "Dados inseridos com sucesso!"}), 200
 
@@ -45,9 +45,9 @@ def inserir_metrics():
 @leitura_bp.route('/leituras', methods=['GET'])
 def listar_leituras():
     try:
-        # Filtros opcionais
+        
         inversor_id = request.args.get('inversor_id', type=int)
-        data_inicio = request.args.get('data_inicio')  # Ex: 2025-01-01
+        data_inicio = request.args.get('data_inicio')  
         data_fim = request.args.get('data_fim')
 
         query = Leitura.query

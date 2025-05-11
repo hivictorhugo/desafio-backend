@@ -1,5 +1,5 @@
 from flask import Flask
-from app.extensions import db, migrate  # usa os objetos criados
+from app.extensions import db, migrate  
 from app.controllers.leitura_controller import leitura_bp
 
 def create_app():
