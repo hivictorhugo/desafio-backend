@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify
 from datetime import datetime
 from app.models.leitura import Leitura
 from app import db
+from flask import request
 
 leitura_bp = Blueprint('leitura', __name__)
 
@@ -16,11 +17,14 @@ def inserir_metrics():
         
         # Processar cada item e adicionar ao banco de dados
         for item in data:
-            # Convertendo o campo 'datetime' para o formato de data
+
+            if not all(k in item and item[k] is not None for k in ('inversor_id', 'potencia_ativa_watt', 'temperatura_celsius')):
+
+                continue  # pula registros incompletos
+
             datetime_str = item['datetime']['$date']
             data_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S.%fZ")
-            
-            # Criar o objeto Leitura e adicionar no banco
+
             leitura = Leitura(
                 inversor_id=item['inversor_id'],
                 data=data_datetime,
@@ -28,6 +32,7 @@ def inserir_metrics():
                 temperatura_celsius=item['temperatura_celsius']
             )
             db.session.add(leitura)
+
         
         # Commitar as alterações no banco de dados
         db.session.commit()
@@ -35,4 +40,41 @@ def inserir_metrics():
 
     except Exception as e:
         db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@leitura_bp.route('/leituras', methods=['GET'])
+def listar_leituras():
+    try:
+        # Filtros opcionais
+        inversor_id = request.args.get('inversor_id', type=int)
+        data_inicio = request.args.get('data_inicio')  # Ex: 2025-01-01
+        data_fim = request.args.get('data_fim')
+
+        query = Leitura.query
+
+        if inversor_id:
+            query = query.filter_by(inversor_id=inversor_id)
+        
+        if data_inicio:
+            data_inicio = datetime.strptime(data_inicio, "%Y-%m-%d")
+            query = query.filter(Leitura.data >= data_inicio)
+        
+        if data_fim:
+            data_fim = datetime.strptime(data_fim, "%Y-%m-%d")
+            query = query.filter(Leitura.data <= data_fim)
+        
+        leituras = query.all()
+        resultado = []
+        for leitura in leituras:
+            resultado.append({
+                'id': leitura.id,
+                'inversor_id': leitura.inversor_id,
+                'data': leitura.data.isoformat(),
+                'potencia_ativa_watt': leitura.potencia_ativa_watt,
+                'temperatura_celsius': leitura.temperatura_celsius
+            })
+
+        return jsonify(resultado), 200
+
+    except Exception as e:
         return jsonify({"error": str(e)}), 500

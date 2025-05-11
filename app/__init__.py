@@ -1,12 +1,6 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+from app.extensions import db, migrate  # usa os objetos criados
 from app.controllers.leitura_controller import leitura_bp
-
-# Criando o objeto db
-db = SQLAlchemy()
-migrate = Migrate()
-
 
 def create_app():
     app = Flask(__name__)
@@ -15,15 +9,13 @@ def create_app():
     app.config['ENV'] = 'development'
     app.config['DEBUG'] = True
 
-    # Inicializa o banco de dados
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Aqui você registra o blueprint
     from app.controllers.usina_controller import usina_bp
     from app.controllers.inversor_controller import inversor_bp
-    
-   
+    from app.controllers.leitura_controller import leitura_bp
+
     app.register_blueprint(usina_bp)
     app.register_blueprint(inversor_bp)
     app.register_blueprint(leitura_bp)
@@ -34,3 +26,4 @@ app = create_app()
 
 from app.models.usina import Usina
 from app.models.inversor import Inversor
+from app.models.leitura import Leitura
