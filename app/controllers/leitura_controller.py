@@ -191,4 +191,31 @@ def geracao_usina():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-    
+@leitura_bp.route('/geracao-inversor', methods=['GET'])
+def geracao_inversor():
+    try:
+        inversor_id = request.args.get('inversor_id', type=int)
+        data_inicio = request.args.get('data_inicio')
+        data_fim = request.args.get('data_fim')
+
+        if not inversor_id:
+            return jsonify({"error": "inversor_id é obrigatório"}), 400
+
+        query = Leitura.query.filter_by(inversor_id=inversor_id)
+        if data_inicio:
+            query = query.filter(Leitura.data >= datetime.strptime(data_inicio, "%Y-%m-%d"))
+        if data_fim:
+            query = query.filter(Leitura.data <= datetime.strptime(data_fim, "%Y-%m-%d"))
+
+        leituras = query.order_by(Leitura.data).all()
+        entidade = type('Entidade', (), {})()
+        entidade.power = [
+            TimeSeriesValue(value=l.potencia_ativa_watt, date=l.data) for l in leituras
+        ]
+
+        total = calc_inverters_generation([entidade])
+        return jsonify({"inversor_id": inversor_id, "geracao_total_kwh": round(total, 2)}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
