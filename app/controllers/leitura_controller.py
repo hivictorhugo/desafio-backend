@@ -4,6 +4,7 @@ from datetime import datetime
 from app.models.leitura import Leitura
 from app import db
 from flask import request
+from sqlalchemy import func, cast, Date
 
 leitura_bp = Blueprint('leitura', __name__)
 
@@ -75,6 +76,44 @@ def listar_leituras():
             })
 
         return jsonify(resultado), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@leitura_bp.route('/potencia-maxima', methods=['GET'])
+def potencia_maxima_por_dia():
+    try:
+        inversor_id = request.args.get('inversor_id', type=int)
+        data_inicio = request.args.get('data_inicio')
+        data_fim = request.args.get('data_fim')
+
+        if not inversor_id:
+            return jsonify({"error": "inversor_id é obrigatório"}), 400
+
+        query = db.session.query(
+            cast(Leitura.data, Date).label('data'),
+            func.max(Leitura.potencia_ativa_watt).label('potencia_maxima')
+        ).filter(Leitura.inversor_id == inversor_id)
+
+        if data_inicio:
+            data_inicio = datetime.strptime(data_inicio, "%Y-%m-%d")
+            query = query.filter(Leitura.data >= data_inicio)
+        
+        if data_fim:
+            data_fim = datetime.strptime(data_fim, "%Y-%m-%d")
+            query = query.filter(Leitura.data <= data_fim)
+
+        query = query.group_by(cast(Leitura.data, Date)).order_by('data')
+
+        resultados = [
+            {
+                "data": str(linha.data),
+                "potencia_maxima": linha.potencia_maxima
+            }
+            for linha in query.all()
+        ]
+
+        return jsonify(resultados), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
