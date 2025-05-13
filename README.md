@@ -75,6 +75,11 @@ Invoke-RestMethod -Uri http://127.0.0.1:5000/inversores -Method Post -ContentTyp
     temperatura = 45
 } | ConvertTo-Json)
 ```
+## Testes com filtros (exemplos)
+
+- `/geracao-usina?usina_id=1&data_inicio=2023-01-01&data_fim=2023-12-31`
+- `/potencia-maxima?inversor_id=2&data_inicio=2023-05-01&data_fim=2023-05-07`
+
 
 ## Observações
 
