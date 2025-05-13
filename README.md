@@ -16,8 +16,9 @@ Este projeto é um protótipo de API REST para monitoramento de usinas fotovolta
 desafio-backend/
 |├── app/
 |   |├── __init__.py
-|   |├── models/
 |   |├── controllers/
+|   |├── models/
+|   |├── schemas/
 |   └── ...
 |└── migrations/ (após rodar os comandos do Flask-Migrate)
 ```
