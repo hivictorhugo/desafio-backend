@@ -117,3 +117,42 @@ def potencia_maxima_por_dia():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@leitura_bp.route('/temperatura-media', methods=['GET'])
+def temperatura_media_por_dia():
+    try:
+        inversor_id = request.args.get('inversor_id', type=int)
+        data_inicio = request.args.get('data_inicio')
+        data_fim = request.args.get('data_fim')
+
+        if not inversor_id:
+            return jsonify({"error": "inversor_id é obrigatório"}), 400
+
+        query = db.session.query(
+            cast(Leitura.data, Date).label('data'),
+            func.avg(Leitura.temperatura_celsius).label('temperatura_media')
+        ).filter(Leitura.inversor_id == inversor_id)
+
+        if data_inicio:
+            data_inicio = datetime.strptime(data_inicio, "%Y-%m-%d")
+            query = query.filter(Leitura.data >= data_inicio)
+
+        if data_fim:
+            data_fim = datetime.strptime(data_fim, "%Y-%m-%d")
+            query = query.filter(Leitura.data <= data_fim)
+
+        query = query.group_by(cast(Leitura.data, Date)).order_by('data')
+
+        resultados = [
+            {
+                "data": str(linha.data),
+                "temperatura_media": round(linha.temperatura_media, 2)
+            }
+            for linha in query.all()
+        ]
+
+        return jsonify(resultados), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
