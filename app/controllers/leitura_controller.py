@@ -5,6 +5,8 @@ from app.models.leitura import Leitura
 from app import db
 from flask import request
 from sqlalchemy import func, cast, Date
+from app.models.inversor import Inversor
+from app.utils import calc_inverters_generation, TimeSeriesValue
 
 leitura_bp = Blueprint('leitura', __name__)
 
@@ -156,3 +158,37 @@ def temperatura_media_por_dia():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@leitura_bp.route('/geracao-usina', methods=['GET'])
+def geracao_usina():
+    try:
+        usina_id = request.args.get('usina_id', type=int)
+        data_inicio = request.args.get('data_inicio')
+        data_fim = request.args.get('data_fim')
+
+        if not usina_id:
+            return jsonify({"error": "usina_id é obrigatório"}), 400
+
+        inversores = Inversor.query.filter_by(usina_id=usina_id).all()
+        entidades = []
+
+        for inversor in inversores:
+            query = Leitura.query.filter_by(inversor_id=inversor.id)
+            if data_inicio:
+                query = query.filter(Leitura.data >= datetime.strptime(data_inicio, "%Y-%m-%d"))
+            if data_fim:
+                query = query.filter(Leitura.data <= datetime.strptime(data_fim, "%Y-%m-%d"))
+
+            leituras = query.order_by(Leitura.data).all()
+            entidade = type('Entidade', (), {})()  # objeto vazio
+            entidade.power = [
+                TimeSeriesValue(value=l.potencia_ativa_watt, date=l.data) for l in leituras
+            ]
+            entidades.append(entidade)
+
+        total = calc_inverters_generation(entidades)
+        return jsonify({"usina_id": usina_id, "geracao_total_kwh": round(total, 2)}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+    
