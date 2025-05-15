@@ -1,50 +1,30 @@
-from flask import Blueprint, request, jsonify
-from app import db
-from app.models.inversor import Inversor
-from app.schemas.inversor_schema import InversorSchema
+from flask import Blueprint
+from app.services.inversor_service import (
+    criar_inversor_service,
+    listar_inversores_service,
+    obter_inversor_service,
+    atualizar_inversor_service,
+    deletar_inversor_service
+)
 
 inversor_bp = Blueprint('inversor', __name__)
-inversor_schema = InversorSchema()
-inversores_schema = InversorSchema(many=True)
 
 @inversor_bp.route('/inversores', methods=['POST'])
 def criar_inversor():
-    data = request.get_json()
-    errors = inversor_schema.validate(data)
-    if errors:
-        return jsonify(errors), 400
-
-    novo_inversor = Inversor(**data)
-    db.session.add(novo_inversor)
-    db.session.commit()
-    return inversor_schema.dump(novo_inversor), 201
+    return criar_inversor_service()
 
 @inversor_bp.route('/inversores', methods=['GET'])
 def listar_inversores():
-    inversores = Inversor.query.all()
-    return jsonify(inversores_schema.dump(inversores))
+    return listar_inversores_service()
 
 @inversor_bp.route('/inversores/<int:id>', methods=['GET'])
 def obter_inversor(id):
-    inversor = Inversor.query.get_or_404(id)
-    return inversor_schema.dump(inversor)
+    return obter_inversor_service(id)
 
 @inversor_bp.route('/inversores/<int:id>', methods=['PUT'])
 def atualizar_inversor(id):
-    inversor = Inversor.query.get_or_404(id)
-    data = request.get_json()
-    errors = inversor_schema.validate(data)
-    if errors:
-        return jsonify(errors), 400
-
-    inversor.nome = data['nome']
-    inversor.usina_id = data['usina_id']
-    db.session.commit()
-    return inversor_schema.dump(inversor)
+    return atualizar_inversor_service(id)
 
 @inversor_bp.route('/inversores/<int:id>', methods=['DELETE'])
 def deletar_inversor(id):
-    inversor = Inversor.query.get_or_404(id)
-    db.session.delete(inversor)
-    db.session.commit()
-    return '', 204
+    return deletar_inversor_service(id)
