@@ -19,6 +19,7 @@ desafio-backend/
 |   |├── controllers/
 |   |├── models/
 |   |├── schemas/
+|   |├── services/
 |   └── ...
 |└── migrations/ (após rodar os comandos do Flask-Migrate)
 ```
